@@ -18,16 +18,22 @@ export class Game {
   constructor(private root: HTMLElement) {}
 
   async initialize() {
-    this.scene.background = new THREE.Color('#b9cedd');
-    this.scene.fog = new THREE.Fog('#b9cedd', 42, 145);
-    this.camera = new THREE.PerspectiveCamera(58, 1, 0.1, 260);
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+    this.scene.background = new THREE.Color('#a9c9df');
+    this.scene.fog = new THREE.FogExp2('#c5d8df', 0.0038);
+    this.camera = new THREE.PerspectiveCamera(55, 1, 0.1, 320);
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      powerPreference: 'high-performance',
+      logarithmicDepthBuffer: false
+    });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.08;
+    this.renderer.toneMappingExposure = 1.16;
+    this.renderer.setClearColor('#a9c9df', 1);
     this.root.appendChild(this.renderer.domElement);
     const world = new World(this.scene);
     this.player = new PlayerController(this.scene, world.getCollisionBounds());
@@ -52,9 +58,10 @@ export class Game {
   setSensitivity(value: number) { this.followCamera.setSensitivity(value); }
 
   setQuality(value: 'high'|'medium'|'low') {
-    const ratio = value === 'high' ? 1.75 : value === 'medium' ? 1.35 : 1;
+    const ratio = value === 'high' ? 1.6 : value === 'medium' ? 1.25 : 0.85;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, ratio));
     this.renderer.shadowMap.enabled = value !== 'low';
+    this.renderer.shadowMap.type = value === 'high' ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
     this.resize();
   }
 
@@ -64,7 +71,8 @@ export class Game {
 
   private resize = () => {
     const w = Math.max(1, this.root.clientWidth), h = Math.max(1, this.root.clientHeight);
-    this.camera.aspect = w / h; this.camera.updateProjectionMatrix();
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h, false);
   };
 
