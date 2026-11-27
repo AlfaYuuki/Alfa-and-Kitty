@@ -14,7 +14,6 @@ export class Game {
   private followCamera!: ThirdPersonCamera;
   private clock = new THREE.Clock();
   private running = false;
-  private quality: 'high'|'medium'|'low' = 'medium';
 
   constructor(private root: HTMLElement) {}
 
