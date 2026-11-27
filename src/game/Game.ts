@@ -49,8 +49,9 @@ export class Game {
   save() { SaveManager.save(this.player.getPosition()); }
   load() { const p = SaveManager.load(); if (p) this.player.setPosition(p); }
 
+  setSensitivity(value: number) { this.followCamera.setSensitivity(value); }
+
   setQuality(value: 'high'|'medium'|'low') {
-    this.quality = value;
     const ratio = value === 'high' ? 1.75 : value === 'medium' ? 1.35 : 1;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, ratio));
     this.renderer.shadowMap.enabled = value !== 'low';
