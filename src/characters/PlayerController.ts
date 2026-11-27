@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { InputManager } from '../input/InputManager';
-
-type Blocker = { minX:number; maxX:number; minZ:number; maxZ:number };
+import { CollisionBox } from '../world/World';
 
 export class PlayerController {
   private group = new THREE.Group();
@@ -15,13 +14,7 @@ export class PlayerController {
   private rightArm = new THREE.Group();
   private leftLeg = new THREE.Group();
   private rightLeg = new THREE.Group();
-  private blockers: Blocker[] = [
-    {minX:-17.5,maxX:17.5,minZ:-29.5,maxZ:-16.5},
-    {minX:-32,maxX:-18,minZ:-13,maxZ:5},
-    {minX:17,maxX:31,minZ:-28,maxZ:-12}
-  ];
-
-  constructor(scene: THREE.Scene) {
+  constructor(scene: THREE.Scene, private blockers: CollisionBox[]) {
     const hoodie = new THREE.MeshStandardMaterial({ color: '#202b3b', roughness: 0.82 });
     const skin = new THREE.MeshStandardMaterial({ color: '#d8a982', roughness: 0.9 });
     const hairMat = new THREE.MeshStandardMaterial({ color: '#17191e', roughness: 0.95 });
