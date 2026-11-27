@@ -6,7 +6,7 @@ export class ThirdPersonCamera {
   private distance = 7.2;
   private sensitivity = 0.006;
   private target = new THREE.Vector3();
-  constructor(private camera: THREE.PerspectiveCamera, private element: HTMLElement) {}
+  constructor(private camera: THREE.PerspectiveCamera) {}
   setSensitivity(value: number) { this.sensitivity = 0.006 * value; }
   getYaw() { return this.yaw; }
 
