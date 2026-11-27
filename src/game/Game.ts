@@ -35,17 +35,18 @@ export class Game {
     this.input.attach(this.renderer.domElement);
     this.bindTouchControls();
     window.addEventListener('resize', this.resize);
+    window.addEventListener('pagehide', this.handlePageHide);
     this.resize();
     this.renderer.setAnimationLoop(this.animate);
   }
 
   start() { this.running = true; this.clock.getDelta(); this.input.setEnabled(true); }
-  stop() { this.running = false; this.input.setEnabled(false); }
-  pause() { this.running = false; this.input.setEnabled(false); }
+  stop() { this.save(); this.running = false; this.input.setEnabled(false); }
+  pause() { this.save(); this.running = false; this.input.setEnabled(false); }
   resume() { this.running = true; this.clock.getDelta(); this.input.setEnabled(true); }
   isRunning() { return this.running; }
   hasSave() { return SaveManager.exists(); }
-  save() { SaveManager.save(this.player.getPosition()); }
+  save() { return SaveManager.save(this.player.getPosition()); }
   load() { const p = SaveManager.load(); if (p) this.player.setPosition(p); }
 
   setSensitivity(value: number) { this.followCamera.setSensitivity(value); }
@@ -56,6 +57,10 @@ export class Game {
     this.renderer.shadowMap.enabled = value !== 'low';
     this.resize();
   }
+
+  private handlePageHide = () => {
+    if (this.player) this.save();
+  };
 
   private resize = () => {
     const w = Math.max(1, this.root.clientWidth), h = Math.max(1, this.root.clientHeight);
