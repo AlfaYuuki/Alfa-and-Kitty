@@ -5,9 +5,16 @@ type Blocker = { minX:number; maxX:number; minZ:number; maxZ:number };
 
 export class PlayerController {
   private group = new THREE.Group();
+  private rig = new THREE.Group();
   private direction = new THREE.Vector3();
   private walk = 3.2;
   private run = 6.3;
+  private gaitPhase = 0;
+  private gaitAmount = 0;
+  private leftArm = new THREE.Group();
+  private rightArm = new THREE.Group();
+  private leftLeg = new THREE.Group();
+  private rightLeg = new THREE.Group();
   private blockers: Blocker[] = [
     {minX:-17.5,maxX:17.5,minZ:-29.5,maxZ:-16.5},
     {minX:-32,maxX:-18,minZ:-13,maxZ:5},
@@ -15,16 +22,67 @@ export class PlayerController {
   ];
 
   constructor(scene: THREE.Scene) {
-    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.95, 5, 10), new THREE.MeshStandardMaterial({ color: '#202b3b', roughness: 0.82 }));
-    body.position.y = 1.12; body.castShadow = true;
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.34, 16, 12), new THREE.MeshStandardMaterial({ color: '#d8a982', roughness: 0.9 }));
-    head.position.y = 1.95; head.castShadow = true;
-    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.58), new THREE.MeshStandardMaterial({ color: '#17191e', roughness: 0.95 }));
-    hair.position.y = 2.08; hair.castShadow = true;
-    const hoodieMark = new THREE.Mesh(new THREE.BoxGeometry(0.44,0.08,0.025), new THREE.MeshStandardMaterial({color:'#3b5d85'}));
-    hoodieMark.position.set(0,1.45,0.405);
-    this.group.add(body, head, hair, hoodieMark);
-    this.group.position.set(0,0,8);
+    const hoodie = new THREE.MeshStandardMaterial({ color: '#202b3b', roughness: 0.82 });
+    const skin = new THREE.MeshStandardMaterial({ color: '#d8a982', roughness: 0.9 });
+    const hairMat = new THREE.MeshStandardMaterial({ color: '#17191e', roughness: 0.95 });
+    const shoeMat = new THREE.MeshStandardMaterial({ color: '#171d27', roughness: 0.92 });
+
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.72, 5, 10), hoodie);
+    body.position.y = 1.15;
+    body.castShadow = true;
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.34, 20, 16), skin);
+    head.position.y = 1.95;
+    head.castShadow = true;
+
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.355, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.58), hairMat);
+    hair.position.y = 2.08;
+    hair.castShadow = true;
+
+    const fringe = new THREE.Mesh(new THREE.SphereGeometry(0.19, 14, 10), hairMat);
+    fringe.scale.set(1.25, 0.55, 0.8);
+    fringe.position.set(0, 2.12, 0.25);
+    fringe.castShadow = true;
+
+    const hoodieMark = new THREE.Mesh(
+      new THREE.BoxGeometry(0.44, 0.08, 0.025),
+      new THREE.MeshStandardMaterial({ color: '#5279a8', roughness: 0.7 })
+    );
+    hoodieMark.position.set(0, 1.43, 0.405);
+
+    const limbGeometry = new THREE.CapsuleGeometry(0.14, 0.48, 4, 8);
+    const legGeometry = new THREE.CapsuleGeometry(0.17, 0.48, 4, 8);
+
+    this.leftArm.position.set(-0.48, 1.48, 0);
+    this.rightArm.position.set(0.48, 1.48, 0);
+    for (const arm of [this.leftArm, this.rightArm]) {
+      const sleeve = new THREE.Mesh(limbGeometry, hoodie);
+      sleeve.position.y = -0.29;
+      sleeve.castShadow = true;
+      arm.add(sleeve);
+    }
+    const leftHand = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 8), skin);
+    const rightHand = leftHand.clone();
+    leftHand.position.y = -0.62;
+    rightHand.position.y = -0.62;
+    this.leftArm.add(leftHand);
+    this.rightArm.add(rightHand);
+
+    this.leftLeg.position.set(-0.22, 0.78, 0);
+    this.rightLeg.position.set(0.22, 0.78, 0);
+    for (const leg of [this.leftLeg, this.rightLeg]) {
+      const trouser = new THREE.Mesh(legGeometry, hoodie);
+      trouser.position.y = -0.31;
+      trouser.castShadow = true;
+      const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.16, 0.43), shoeMat);
+      shoe.position.set(0, -0.63, 0.08);
+      shoe.castShadow = true;
+      leg.add(trouser, shoe);
+    }
+
+    this.rig.add(body, head, hair, fringe, hoodieMark, this.leftArm, this.rightArm, this.leftLeg, this.rightLeg);
+    this.group.add(this.rig);
+    this.group.position.set(0, 0, 8);
     scene.add(this.group);
   }
 
@@ -34,18 +92,38 @@ export class PlayerController {
     const forwardVector = new THREE.Vector3(-Math.sin(cameraYaw),0,-Math.cos(cameraYaw));
     const rightVector = new THREE.Vector3(Math.cos(cameraYaw),0,-Math.sin(cameraYaw));
     this.direction.set(0,0,0).addScaledVector(forwardVector,forward).addScaledVector(rightVector,side);
-    if (this.direction.lengthSq() > 0) {
+
+    const moving = this.direction.lengthSq() > 0;
+    const sprinting = input.down('shift');
+    if (moving) {
       this.direction.normalize();
       const targetYaw = Math.atan2(this.direction.x,this.direction.z) + Math.PI;
       this.group.rotation.y = THREE.MathUtils.damp(this.group.rotation.y,targetYaw,12,dt);
     }
-    const speed = input.down('shift') ? this.run : this.walk;
+
+    const speed = sprinting ? this.run : this.walk;
     const movement = this.direction.clone().multiplyScalar(speed * dt);
     const current = this.group.position;
     const nextX = THREE.MathUtils.clamp(current.x + movement.x,-37,37);
     const nextZ = THREE.MathUtils.clamp(current.z + movement.z,-41,41);
     if (!this.collides(nextX,current.z)) current.x = nextX;
     if (!this.collides(current.x,nextZ)) current.z = nextZ;
+
+    const targetGait = moving ? 1 : 0;
+    this.gaitAmount = THREE.MathUtils.damp(this.gaitAmount,targetGait, moving ? 12 : 10,dt);
+    if (this.gaitAmount > 0.001) {
+      this.gaitPhase += dt * (sprinting ? 13 : 9);
+    }
+    const swing = Math.sin(this.gaitPhase) * this.gaitAmount;
+    const runBounce = Math.abs(Math.cos(this.gaitPhase * 2)) * 0.055 * this.gaitAmount;
+    this.leftLeg.rotation.x = swing * 0.72;
+    this.rightLeg.rotation.x = -swing * 0.72;
+    this.leftArm.rotation.x = -swing * 0.58;
+    this.rightArm.rotation.x = swing * 0.58;
+    this.leftArm.rotation.z = -0.08;
+    this.rightArm.rotation.z = 0.08;
+    this.rig.position.y = runBounce;
+    this.rig.rotation.z = moving ? Math.sin(this.gaitPhase) * 0.025 * this.gaitAmount : 0;
   }
 
   private collides(x:number,z:number) {
