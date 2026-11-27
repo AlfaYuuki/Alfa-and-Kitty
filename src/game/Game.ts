@@ -29,8 +29,8 @@ export class Game {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.08;
     this.root.appendChild(this.renderer.domElement);
-    new World(this.scene);
-    this.player = new PlayerController(this.scene);
+    const world = new World(this.scene);
+    this.player = new PlayerController(this.scene, world.getCollisionBounds());
     this.followCamera = new ThirdPersonCamera(this.camera, this.scene);
     this.input.attach(this.renderer.domElement);
     this.bindTouchControls();
