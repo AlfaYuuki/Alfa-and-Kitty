@@ -1,0 +1,96 @@
+import * as THREE from 'three';
+import { World } from '../world/World';
+import { PlayerController } from '../characters/PlayerController';
+import { InputManager } from '../input/InputManager';
+import { ThirdPersonCamera } from '../camera/ThirdPersonCamera';
+import { SaveManager } from '../save/SaveManager';
+
+export class Game {
+  private renderer!: THREE.WebGLRenderer;
+  private scene = new THREE.Scene();
+  private camera!: THREE.PerspectiveCamera;
+  private world!: World;
+  private player!: PlayerController;
+  private input = new InputManager();
+  private followCamera!: ThirdPersonCamera;
+  private clock = new THREE.Clock();
+  private running = false;
+  private frame = 0;
+  private quality: 'high'|'medium'|'low' = 'medium';
+  private sensitivity = 1;
+
+  constructor(private root: HTMLElement) {}
+
+  async initialize() {
+    this.scene.background = new THREE.Color('#b9cedd');
+    this.scene.fog = new THREE.Fog('#b9cedd', 42, 145);
+    this.camera = new THREE.PerspectiveCamera(58, 1, 0.1, 260);
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.08;
+    this.root.appendChild(this.renderer.domElement);
+    this.world = new World(this.scene);
+    this.player = new PlayerController(this.scene);
+    this.followCamera = new ThirdPersonCamera(this.camera, this.renderer.domElement);
+    this.followCamera.setSensitivity(this.sensitivity);
+    this.input.attach(this.renderer.domElement);
+    this.bindTouchControls();
+    window.addEventListener('resize', this.resize);
+    this.resize();
+    this.renderer.setAnimationLoop(this.animate);
+  }
+
+  start() { this.running = true; this.clock.getDelta(); this.input.setEnabled(true); }
+  stop() { this.running = false; this.input.setEnabled(false); }
+  pause() { this.running = false; this.input.setEnabled(false); }
+  resume() { this.running = true; this.clock.getDelta(); this.input.setEnabled(true); }
+  isRunning() { return this.running; }
+  hasSave() { return SaveManager.exists(); }
+  save() { SaveManager.save(this.player.getPosition()); }
+  load() { const p = SaveManager.load(); if (p) this.player.setPosition(p); }
+  setQuality(value: 'high'|'medium'|'low') {
+    this.quality = value;
+    const ratio = value === 'high' ? 1.75 : value === 'medium' ? 1.35 : 1;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, ratio));
+    this.renderer.shadowMap.enabled = value !== 'low';
+    this.resize();
+  }
+  setSensitivity(value: number) { this.sensitivity = value; this.followCamera.setSensitivity(value); }
+
+  private resize = () => {
+    const w = Math.max(1, this.root.clientWidth), h = Math.max(1, this.root.clientHeight);
+    this.camera.aspect = w / h; this.camera.updateProjectionMatrix();
+    this.renderer.setSize(w, h, false);
+  };
+
+  private bindTouchControls() {
+    const keys = new Map<string, string>([['forward','w'],['back','s'],['left','a'],['right','d']]);
+    document.querySelectorAll<HTMLButtonElement>('[data-key]').forEach(button => {
+      const key = keys.get(button.dataset.key ?? '');
+      if (!key) return;
+      const down = (e: Event) => { e.preventDefault(); this.input.setVirtualKey(key, true); };
+      const up = () => this.input.setVirtualKey(key, false);
+      button.addEventListener('pointerdown', down);
+      button.addEventListener('pointerup', up);
+      button.addEventListener('pointercancel', up);
+      button.addEventListener('pointerleave', up);
+    });
+    const run = document.querySelector<HTMLButtonElement>('#touch-run');
+    run?.addEventListener('pointerdown', () => this.input.setVirtualKey('shift', true));
+    ['pointerup','pointercancel','pointerleave'].forEach(type => run?.addEventListener(type, () => this.input.setVirtualKey('shift', false)));
+  }
+
+  private animate = () => {
+    const dt = Math.min(this.clock.getDelta(), 0.05);
+    if (this.running) {
+      this.player.update(dt, this.input);
+      this.followCamera.update(this.player.getPosition(), dt);
+      this.frame++;
+    }
+    this.renderer.render(this.scene, this.camera);
+  };
+}
