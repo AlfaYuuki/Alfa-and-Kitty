@@ -31,7 +31,7 @@ export class Game {
     this.root.appendChild(this.renderer.domElement);
     new World(this.scene);
     this.player = new PlayerController(this.scene);
-    this.followCamera = new ThirdPersonCamera(this.camera);
+    this.followCamera = new ThirdPersonCamera(this.camera, this.scene);
     this.input.attach(this.renderer.domElement);
     this.bindTouchControls();
     window.addEventListener('resize', this.resize);
