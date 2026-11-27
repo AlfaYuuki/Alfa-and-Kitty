@@ -9,15 +9,12 @@ export class Game {
   private renderer!: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
   private camera!: THREE.PerspectiveCamera;
-  private world!: World;
   private player!: PlayerController;
   private input = new InputManager();
   private followCamera!: ThirdPersonCamera;
   private clock = new THREE.Clock();
   private running = false;
-  private frame = 0;
   private quality: 'high'|'medium'|'low' = 'medium';
-  private sensitivity = 1;
 
   constructor(private root: HTMLElement) {}
 
@@ -33,10 +30,9 @@ export class Game {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.08;
     this.root.appendChild(this.renderer.domElement);
-    this.world = new World(this.scene);
+    new World(this.scene);
     this.player = new PlayerController(this.scene);
     this.followCamera = new ThirdPersonCamera(this.camera, this.renderer.domElement);
-    this.followCamera.setSensitivity(this.sensitivity);
     this.input.attach(this.renderer.domElement);
     this.bindTouchControls();
     window.addEventListener('resize', this.resize);
@@ -52,6 +48,7 @@ export class Game {
   hasSave() { return SaveManager.exists(); }
   save() { SaveManager.save(this.player.getPosition()); }
   load() { const p = SaveManager.load(); if (p) this.player.setPosition(p); }
+
   setQuality(value: 'high'|'medium'|'low') {
     this.quality = value;
     const ratio = value === 'high' ? 1.75 : value === 'medium' ? 1.35 : 1;
@@ -59,7 +56,6 @@ export class Game {
     this.renderer.shadowMap.enabled = value !== 'low';
     this.resize();
   }
-  setSensitivity(value: number) { this.sensitivity = value; this.followCamera.setSensitivity(value); }
 
   private resize = () => {
     const w = Math.max(1, this.root.clientWidth), h = Math.max(1, this.root.clientHeight);
@@ -87,9 +83,9 @@ export class Game {
   private animate = () => {
     const dt = Math.min(this.clock.getDelta(), 0.05);
     if (this.running) {
-      this.player.update(dt, this.input);
-      this.followCamera.update(this.player.getPosition(), dt);
-      this.frame++;
+      const look = this.input.consumeLook();
+      this.followCamera.update(this.player.getPosition(), dt, look.x, look.y);
+      this.player.update(dt, this.input, this.followCamera.getYaw());
     }
     this.renderer.render(this.scene, this.camera);
   };
