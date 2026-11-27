@@ -1,7 +1,25 @@
 import * as THREE from 'three';
 
+export type CollisionBox = { minX: number; maxX: number; minZ: number; maxZ: number };
+
 export class World {
   constructor(private scene: THREE.Scene) { this.build(); }
+
+  getCollisionBounds(): CollisionBox[] {
+    const bounds: CollisionBox[] = [
+      { minX: -17.5, maxX: 17.5, minZ: -29.5, maxZ: -16.5 },
+      { minX: -32, maxX: -18, minZ: -13, maxZ: 5 },
+      { minX: 17, maxX: 31, minZ: -28, maxZ: -12 },
+      { minX: -1.8, maxX: 1.8, minZ: -11.5, maxZ: -10.5 }
+    ];
+    for (let i = 0; i < 16; i++) {
+      const x = (i % 8) * 9 - 31;
+      const z = Math.floor(i / 8) * 34 - 8;
+      bounds.push({ minX: x - 0.62, maxX: x + 0.62, minZ: z - 0.62, maxZ: z + 0.62 });
+    }
+    return bounds;
+  }
+
   private material(color: string, roughness = 0.9) { return new THREE.MeshStandardMaterial({ color, roughness }); }
   private box(name: string, x: number, y: number, z: number, sx: number, sy: number, sz: number, color: string) {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz), this.material(color));
