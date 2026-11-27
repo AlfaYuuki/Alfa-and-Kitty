@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#101722" />
+    <meta name="description" content="Alfa & Kitty — a third-person 3D story adventure." />
+    <title>Alfa & Kitty — v0.1.0</title>
+  </head>
+  <body>
+    <div id="app">
+      <div id="loading" class="loading-screen"><div class="loader"></div><span>Preparing Kitsune High…</span></div>
+      <div id="game-root"></div>
+      <div id="menu" class="overlay">
+        <div class="menu-card">
+          <div class="eyebrow">A STORY ADVENTURE</div>
+          <h1>ALFA <span>&</span> KITTY</h1>
+          <p>One world. Two unforgettable characters.</p>
+          <button id="start-button" class="primary">START EXPLORING</button>
+          <button id="continue-button" class="secondary">CONTINUE</button>
+          <div class="menu-footer">FOUNDATION PROTOTYPE <b>v0.1.0</b></div>
+        </div>
+      </div>
+      <div id="hud" class="hud hidden">
+        <div class="brand">ALFA <span>&</span> KITTY <small>v0.1.0</small></div>
+        <div class="location"><i></i> KITSUNE HIGH · CAMPUS</div>
+        <div class="hint">WASD MOVE <span>·</span> SHIFT RUN <span>·</span> DRAG LOOK <span>·</span> ESC PAUSE</div>
+        <button id="pause-button" class="pause-button" aria-label="Pause">Ⅱ</button>
+        <div id="interaction" class="interaction hidden">E &nbsp; INTERACT</div>
+        <div id="touch-controls" class="touch-controls">
+          <div class="touch-pad">
+            <button data-key="forward">▲</button>
+            <div><button data-key="left">◀</button><button data-key="back">▼</button><button data-key="right">▶</button></div>
+          </div>
+          <button id="touch-run" class="touch-run">RUN</button>
+        </div>
+      </div>
+      <div id="pause-menu" class="overlay hidden">
+        <div class="menu-card compact">
+          <div class="eyebrow">GAME PAUSED</div><h2>Take a moment.</h2>
+          <button id="resume-button" class="primary">RESUME</button>
+          <button id="save-button" class="secondary">SAVE PROGRESS</button>
+          <button id="settings-button" class="secondary">SETTINGS</button>
+          <button id="main-menu-button" class="secondary">MAIN MENU</button>
+          <div id="status" class="status" aria-live="polite"></div>
+        </div>
+      </div>
+      <div id="settings-menu" class="overlay hidden">
+        <div class="menu-card compact">
+          <div class="eyebrow">PREFERENCES</div><h2>Settings</h2>
+          <label class="setting">Graphics quality <select id="quality"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></label>
+          <label class="setting">Camera sensitivity <input id="sensitivity" type="range" min="0.3" max="2" step="0.1" value="1"></label>
+          <button id="settings-back" class="primary">DONE</button>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
